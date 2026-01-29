@@ -16,7 +16,7 @@ class SelfshipCourierController extends Controller
     private int $courier_id;
     private int $company_id;
     private int $parent_company_id;
-    private int $parent_courier_id;
+    private int $parent_courier_id=1;
 
     public $pickup_address;
     public $return_address;
@@ -33,7 +33,6 @@ class SelfshipCourierController extends Controller
         $this->courier_id        = $courier_id;
         $this->company_id        = $company_id ?: session('company_id');
         $this->parent_company_id = $courier_settings->company_id ?? 0;
-        $this->parent_courier_id = 1;
     }
 
     /**
@@ -72,6 +71,7 @@ class SelfshipCourierController extends Controller
                 $this->parent_company_id,
                 $this->company_id,
                 $this->courier_id,
+                $this->parent_courier_id,
                 $this->pickup_address->zipcode,
                 $order->s_zipcode ?: $order->b_zipcode,
                 $order->package_dead_weight ?? 0.5,
@@ -206,32 +206,33 @@ class SelfshipCourierController extends Controller
         $orderIds = $this->order_ids;
 
         try {
-            DB::transaction(function () use ($orderIds) {
+            app(OrderShipmentService::class)->cancelOrderById($orderIds);
+            // DB::transaction(function () use ($orderIds) {
 
-                $shipmentInfos = ShipmentInfo::whereIn('order_id', $orderIds)->get();
+            //     $shipmentInfos = ShipmentInfo::whereIn('order_id', $orderIds)->get();
 
-                foreach ($shipmentInfos as $shipmentInfo) {
-                    try {
-                        app(SellerWalletService::class)->revertFreight([
-                            'company_id'      => $shipmentInfo->company_id,
-                            'shipment_id'     => $shipmentInfo->id,
-                            'tracking_number' => $shipmentInfo->tracking_id,
-                        ]);
-                    } catch (\Exception $e) {
-                        // Log but DO NOT stop cancellation
-                        Log::warning('Freight revert skipped', [
-                            'shipment_id' => $shipmentInfo->id,
-                            'reason' => $e->getMessage(),
-                        ]);
-                    }
-                }
+            //     foreach ($shipmentInfos as $shipmentInfo) {
+            //         try {
+            //             app(SellerWalletService::class)->revertFreight([
+            //                 'company_id'      => $shipmentInfo->company_id,
+            //                 'shipment_id'     => $shipmentInfo->id,
+            //                 'tracking_number' => $shipmentInfo->tracking_id,
+            //             ]);
+            //         } catch (\Exception $e) {
+            //             // Log but DO NOT stop cancellation
+            //             Log::warning('Freight revert skipped', [
+            //                 'shipment_id' => $shipmentInfo->id,
+            //                 'reason' => $e->getMessage(),
+            //             ]);
+            //         }
+            //     }
 
-                ShipmentInfo::whereIn('order_id', $orderIds)->delete();
+            //     ShipmentInfo::whereIn('order_id', $orderIds)->delete();
 
-                Order::whereIn('id', $orderIds)->update([
-                    'status_code' => 'N'
-                ]);
-            });
+            //     Order::whereIn('id', $orderIds)->update([
+            //         'status_code' => 'N'
+            //     ]);
+            // });
 
             $this->result['success'][] = 'Order(s) cancelled successfully';
 

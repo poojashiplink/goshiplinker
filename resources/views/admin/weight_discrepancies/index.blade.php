@@ -75,6 +75,7 @@
                                 <th>Courier Weight</th>
                                 <th>Charged Weight</th>
                                 <th>Excess Weight & Charge</th>
+                                <th>Shorter Image</th>
                                 <th>Status</th>
                                 <th class="text-end">Action</th>
                             </tr>
@@ -142,6 +143,13 @@
                                         <span class="text-danger">
                                             ₹{{ number_format($discrepancy->extra_charge, 2) }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        @if($discrepancy->sorting_machine_image)
+                                        <a href="{{ $discrepancy->sorting_machine_image }}" target="_blank">
+                                            View Image
+                                        </a>
+                                        @endif
                                     </td>
 
                                     {{-- Status --}}

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Services\ShippingRateService;
 use App\Services\SellerWalletService;
+use App\Services\OrderShipmentService;
 class EkartCourierController extends Controller
 {
     private $order_ids 		= array();
@@ -28,6 +29,7 @@ class EkartCourierController extends Controller
     public $result=array();
     public $action="";
     public $print_response=array();
+    public $parent_courier_id=4;
     public function __construct($order_ids = array() , $courier_id = 0 , $company_id = 0,$courier_settings=array()){
 		
 		$this->order_ids 	= $order_ids;
@@ -73,6 +75,7 @@ class EkartCourierController extends Controller
                 $this->parent_company_id,
                 $this->company_id,
                 $this->courier_id,
+                $this->parent_courier_id,
                 $this->pickup_address->zipcode,
                 $order_info['s_zipcode'] ?: $order_info['b_zipcode'],
                 $weight,
@@ -573,30 +576,26 @@ class EkartCourierController extends Controller
                             $response_item['status_code'] == 200
                         ) {
                             $order_id = $orderMap[$tracking_id];
-                            DB::transaction(function () use ($order) {
-
-                                $shipmentInfo = $order->shipmentInfo;
-
-                                if ($shipmentInfo) {
-                                    app(SellerWalletService::class)->revertFreight([
-                                        'company_id'      => $shipmentInfo->company_id,
-                                        'shipment_id'     => $shipmentInfo->id,
-                                        'tracking_number' => $shipmentInfo->tracking_id,
-                                    ]);
-                                }
-
-                                ShipmentInfo::where('order_id', $order->id)->delete();
-
-                                Order::where('id', $order->id)->update([
-                                    'status_code' => 'N'
-                                ]);
-                            });
-
-                            
+                            app(OrderShipmentService::class)->cancelOrderById($order->id);
                             // DB::transaction(function () use ($order) {
+
+                            //     $shipmentInfo = $order->shipmentInfo;
+
+                            //     if ($shipmentInfo) {
+                            //         app(SellerWalletService::class)->revertFreight([
+                            //             'company_id'      => $shipmentInfo->company_id,
+                            //             'shipment_id'     => $shipmentInfo->id,
+                            //             'tracking_number' => $shipmentInfo->tracking_id,
+                            //         ]);
+                            //     }
+
                             //     ShipmentInfo::where('order_id', $order->id)->delete();
-                            //     Order::where('id', $order->id)->update(['status_code' => 'N']);
+
+                            //     Order::where('id', $order->id)->update([
+                            //         'status_code' => 'N'
+                            //     ]);
                             // });
+
                         } else {
                             $this->result['error'][] = "Cancel failed for Order ID {$orderMap[$tracking_id]}";
                         }

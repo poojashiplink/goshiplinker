@@ -32,6 +32,7 @@ class RapidshypCourierController extends Controller
     public $action="";
     public $print_response=array();
     public $shipment_mode='';
+    public $parent_courier_id=12;
     public function __construct($order_ids = array() , $courier_id = 0 , $company_id = 0,$courier_settings=array()){
 		
 		$this->order_ids 	= $order_ids;

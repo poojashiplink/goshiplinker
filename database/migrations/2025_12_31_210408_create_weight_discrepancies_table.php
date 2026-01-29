@@ -18,10 +18,16 @@ return new class extends Migration
             $table->unsignedBigInteger('order_id')->index();
             $table->unsignedBigInteger('shipment_id')->index();
             $table->string('tracking_number', 100)->index();
+            $table->string('sorting_machine_image',255)->nullable();
             // Weights
             $table->decimal('applied_weight', 8, 2)->comment('Seller declared weight');
-            $table->decimal('courier_weight', 8, 2)->comment('Courier billed weight');
+            $table->decimal('courier_weight', 8, 2)->comment('Courier billed weight');            
             $table->decimal('difference_weight', 8, 2);
+
+            // Dimensions
+            $table->decimal('courier_length', 8, 2)->nullable();
+            $table->decimal('courier_breadth', 8, 2)->nullable();
+            $table->decimal('courier_height', 8, 2)->nullable();
 
             // Charges
             $table->decimal('extra_charge', 10, 2)->nullable()

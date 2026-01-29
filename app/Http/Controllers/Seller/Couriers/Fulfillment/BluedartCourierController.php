@@ -16,7 +16,7 @@ use App\Models\OrderCourierResponse;
 use Carbon\Carbon;
 use App\Services\ShippingRateService;
 use App\Services\SellerWalletService;
-
+use App\Services\OrderShipmentService;
 class BluedartCourierController extends Controller
 {
     private $order_ids 		= array();
@@ -38,6 +38,7 @@ class BluedartCourierController extends Controller
     public $action="";
     public $print_response=array();
     public $parent_company_id=0;
+    public $parent_courier_id=2;
     public function __construct($order_ids = array() , $courier_id = 0 , $company_id = 0,$courier_settings=array()){
 		$this->order_ids 	= $order_ids;
 		$this->courier_id 	= $courier_id;
@@ -88,6 +89,7 @@ class BluedartCourierController extends Controller
                 $this->parent_company_id,
                 $this->company_id,
                 $this->courier_id,
+                $this->parent_courier_id,
                 $this->pickup_address->zipcode,
                 $order_info['s_zipcode'] ?: $order_info['b_zipcode'],
                 $weight,
@@ -803,22 +805,16 @@ class BluedartCourierController extends Controller
                      if ($response->status() === 200) {
                         $responseBody = $response->json();
                         $statusCode = $responseBody[0]['StatusCode'] ?? '';
-                        DB::transaction(function () use ($orderId, $shipmentInfo) {
-                            app(SellerWalletService::class)->revertFreight([
-                                'company_id'      => $shipmentInfo->company_id,
-                                'shipment_id'     => $shipmentInfo->id,
-                                'tracking_number' => $shipmentInfo->tracking_id,
-                            ])
-                            ShipmentInfo::where('order_id', $orderId)->delete();
-                            OrderCourierResponse::where('order_id', $orderId)->delete();
-                            Order::where('id', $orderId)->update(['status_code' => 'N']);
-                        });
-                        // DB::transaction(function () use ($orderId) {
-                        // ShipmentInfo::where('order_id', $orderId)->delete();
-                        // OrderCourierResponse::where('order_id', $orderId)->delete();
-                        // Order::where('id', $orderId)->update([
-                        //         'status_code' => 'N'
+                        app(OrderShipmentService::class)->cancelOrderById($orderId);
+                        // DB::transaction(function () use ($orderId, $shipmentInfo) {
+                        //     app(SellerWalletService::class)->revertFreight([
+                        //         'company_id'      => $shipmentInfo->company_id,
+                        //         'shipment_id'     => $shipmentInfo->id,
+                        //         'tracking_number' => $shipmentInfo->tracking_id,
                         //     ]);
+                        //     ShipmentInfo::where('order_id', $orderId)->delete();
+                        //     OrderCourierResponse::where('order_id', $orderId)->delete();
+                        //     Order::where('id', $orderId)->update(['status_code' => 'N']);
                         // });
                         $message = $orderId." Order cancel successfully";
                         $this->result['success'][] = $message;
@@ -829,24 +825,17 @@ class BluedartCourierController extends Controller
                             $statusCode = $error['StatusCode'] ?? 'UnknownStatusCode';
                             $statusInfo = $error['StatusInformation'] ?? 'No details provided';
                             if($statusCode == 'PickupAlreadyCancelled'){
-                                DB::transaction(function () use ($orderId, $shipmentInfo) {
-                                    app(SellerWalletService::class)->revertFreight([
-                                        'company_id'      => $shipmentInfo->company_id,
-                                        'shipment_id'     => $shipmentInfo->id,
-                                        'tracking_number' => $shipmentInfo->tracking_id,
-                                    ]);
-
-                                    ShipmentInfo::where('order_id', $orderId)->delete();
-                                    OrderCourierResponse::where('order_id', $orderId)->delete();
-                                    Order::where('id', $orderId)->update(['status_code' => 'N']);
-                                });
-
-                                // DB::transaction(function () use ($orderId) {
-                                // ShipmentInfo::where('order_id', $orderId)->delete();
-                                // OrderCourierResponse::where('order_id', $orderId)->delete();
-                                // Order::where('id', $orderId)->update([
-                                //         'status_code' => 'N'
+                                app(OrderShipmentService::class)->cancelOrderById($orderId);
+                                // DB::transaction(function () use ($orderId, $shipmentInfo) {
+                                //     app(SellerWalletService::class)->revertFreight([
+                                //         'company_id'      => $shipmentInfo->company_id,
+                                //         'shipment_id'     => $shipmentInfo->id,
+                                //         'tracking_number' => $shipmentInfo->tracking_id,
                                 //     ]);
+
+                                //     ShipmentInfo::where('order_id', $orderId)->delete();
+                                //     OrderCourierResponse::where('order_id', $orderId)->delete();
+                                //     Order::where('id', $orderId)->update(['status_code' => 'N']);
                                 // });
                                 $message = "$statusCode for Order ID $orderId";
                                 $this->result['success'][] = $message;

@@ -16,6 +16,9 @@ use App\Models\SmsGateway;
 use App\Models\OrderPackage;
 use App\Models\CourierMapping;
 use App\Models\ShipmentInfo;
+use App\Models\ManifestOrder;
+use App\Models\OrderCourierResponse;
+use App\Services\SellerWalletService;
 class OrderShipmentService
 {
     public function pickupAddressFormat($pickup_address){
@@ -80,6 +83,39 @@ class OrderShipmentService
         return $shipment;
         
     }
+    public function cancelOrderById(int|array $orderIds): void
+    {
+        $orderIds = is_array($orderIds) ? $orderIds : [$orderIds];
+
+        $walletService = app(SellerWalletService::class);
+
+        DB::transaction(function () use ($orderIds, $walletService) {
+
+            $shipments = ShipmentInfo::whereIn('order_id', $orderIds)->get();
+
+            foreach ($shipments as $shipment) {
+
+                // ✅ Revert freight PER shipment (idempotent inside service)
+                $walletService->revertFreight([
+                    'company_id'      => $shipment->company_id,
+                    'shipment_id'     => $shipment->id,
+                    'tracking_number' => $shipment->tracking_id,
+                ]);
+            }
+
+            // ✅ Cleanup related data
+            ShipmentInfo::whereIn('order_id', $orderIds)->delete();
+            ManifestOrder::whereIn('order_id', $orderIds)->delete();
+            OrderCourierResponse::whereIn('order_id', $orderIds)->delete();
+            TrackingHistory::whereIn('order_id', $orderIds)->delete();
+
+            // ✅ Reset order status
+            Order::whereIn('id', $orderIds)->update([
+                'status_code' => 'N'
+            ]);
+        }, 3); // retry deadlocks
+    }
+
     
 
 }

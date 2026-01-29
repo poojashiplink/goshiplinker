@@ -22,7 +22,11 @@ class CourierWeightImport implements ToCollection, WithHeadingRow
 
                 $trackingNumber = trim($row['tracking_number'] ?? '');
                 $courierWeight  = (float) ($row['courier_weightkg'] ?? 0);
-
+                $length  = (float) ($row['length_cm'] ?? '');
+                $breadth  = (float) ($row['breadth_cm'] ?? '');
+                $height  = (float) ($row['height_cm'] ?? '');
+                $sorting_machine_image = $row['sorting_machine_captured_image_link']??null;
+                //\Log::info($row);
                 if (!$trackingNumber || $courierWeight <= 0) {
                     return;
                 }
@@ -81,9 +85,13 @@ class CourierWeightImport implements ToCollection, WithHeadingRow
                     'order_id'          => $shipment->order_id,
                     'shipment_id'       => $shipment->id,
                     'tracking_number'   => $shipment->tracking_id,
+                    'sorting_machine_image'   => $sorting_machine_image,
                     'applied_weight'    => $appliedSlab,
                     'courier_weight'    => $courierSlab,
                     'difference_weight' => $differenceWeight,
+                    'courier_length'    => $length??null,
+                    'courier_breadth'   => $breadth??null,
+                    'courier_height'    => $height??null,
                     'extra_charge'      => $extraCharge,
                     'status'            => 'new',
                     'source'            => 'cron',
