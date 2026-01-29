@@ -10,7 +10,7 @@ class ShippingRateService
     {
         // Step 1: volumetric weight
         $volumetricWeight = ($length * $breadth * $height) / 5000;
-
+        \Log::info($volumetricWeight);
         // Chargeable weight
         $chargeableWeight = max($weight, $volumetricWeight);
         // Step 2: Find the zone

@@ -21,4 +21,5 @@ yarn-error.log
 /.idea
 /.vscode
 /public/assets/images/*
+/woocommerce
 composer.lock
