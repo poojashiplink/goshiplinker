@@ -54,6 +54,7 @@ class EkartCourierController extends Controller
 	public function assignTrackingNumber()
     {
         $token = $this->authentication();
+        $shipmentService = app(OrderShipmentService::class);
         if(empty($token)){
             $this->result['error'][] = 'Invalid courier credentials';
             if($this->action == 'print_response'){
@@ -99,7 +100,12 @@ class EkartCourierController extends Controller
                 $this->result['error'][$order_info['vendor_order_number']] = 'Insufficient wallet balance to ship this order';
                 continue;
             }
-            $trackingNumber = trim($this->fetchWaybill(), '"');
+            $trackingNumber = $shipmentService->fetchWaybill(
+                $this->parent_company_id,
+                $this->parent_courier_id
+            );
+
+            
             if (empty($trackingNumber)) {
                 $this->result['error'][] = "Tracking number not found for assigning more orders";
                 break;
@@ -265,6 +271,7 @@ class EkartCourierController extends Controller
                             $order_id,
                             $order_info,
                             $tracking_number,
+                            $trackingNumber,
                             $pickup_address,
                             $return_address,
                             $rate
@@ -367,16 +374,16 @@ class EkartCourierController extends Controller
         return $this->result;
 
     }
-    public function fetchWaybill(){
+    // public function fetchWaybill(){
      
-        $response =  DB::table('import_tracking_numbers')->where('used', 0)
-        ->where('company_id', $this->company_id)
-        ->where('courier_id', $this->courier_id)
-        ->select('tracking_number')->first();
-        $tracking_number = !empty($response)? $response->tracking_number:0;
-        return $tracking_number;
+    //     $response =  DB::table('import_tracking_numbers')->where('used', 0)
+    //     ->where('company_id', $this->company_id)
+    //     ->where('courier_id', $this->courier_id)
+    //     ->select('tracking_number')->first();
+    //     $tracking_number = !empty($response)? $response->tracking_number:0;
+    //     return $tracking_number;
        
-    }
+    // }
     public function authentication(){
         $company_id = $this->company_id;
         $token = Cache::get("api_auth_token_ekart_{$this->courier_id}_{$company_id}");

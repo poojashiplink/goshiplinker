@@ -115,7 +115,12 @@ class XpressbeesPostpaidCourierController extends Controller
             //     $this->result['error'][] = 'Pincode is not serviceable for this order id '.$order_info['vendor_order_number'];
             //     continue;
             // }
-            $trackingNumber = $this->fetchWaybill($payment_type);
+            //$trackingNumber = $this->fetchWaybill($payment_type);
+            $trackingNumber = $shipmentService->fetchWaybill(
+                $this->parent_company_id,
+                $this->parent_courier_id,
+                $payment_type
+            );
             if (empty($trackingNumber)) {
                 $this->result['error'][] = "Tracking number not found for assigning more orders";
                 break;
@@ -378,16 +383,16 @@ class XpressbeesPostpaidCourierController extends Controller
         }
         return $this->result;
     }
-    public function fetchWaybill($payment_type){     
-        $response =  DB::table('import_tracking_numbers')->where('used', 0)
-        ->where('company_id', $this->company_id)
-        ->where('courier_id', $this->courier_id)
-        ->where('payment_type', $payment_type)
-        ->select('tracking_number')->first();
-        $tracking_number = !empty($response)? $response->tracking_number:0;
-        return $tracking_number;
+    // public function fetchWaybill($payment_type){     
+    //     $response =  DB::table('import_tracking_numbers')->where('used', 0)
+    //     ->where('company_id', $this->company_id)
+    //     ->where('courier_id', $this->courier_id)
+    //     ->where('payment_type', $payment_type)
+    //     ->select('tracking_number')->first();
+    //     $tracking_number = !empty($response)? $response->tracking_number:0;
+    //     return $tracking_number;
        
-    }
+    // }
     public function authentication(){
         $company_id = $this->company_id;
         $token = Cache::get("api_auth_token_xpressbees_postpaid_{$this->courier_id}_{$company_id}");        

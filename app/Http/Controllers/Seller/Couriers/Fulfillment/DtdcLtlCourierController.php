@@ -108,7 +108,7 @@ class DtdcLtlCourierController extends Controller
                 $this->courier_id,
                 $this->parent_courier_id,
                 $this->pickup_address->zipcode,
-                $consignee_phone,
+                $order_info['s_zipcode'] ?: $order_info['b_zipcode'],
                 $weight,
                 $order_info['package_length'] ?? 10,
                 $order_info['package_breadth'] ?? 10,

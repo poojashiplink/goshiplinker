@@ -38,15 +38,19 @@ class OrderShipmentService
         return $pick_address;
 
     }
-    public function fetchWaybill($company_id,$courier_id){
-     
-       $response =  DB::table('import_tracking_numbers')->where('used', 0)
-       ->where('company_id', $company_id)
-       ->where('courier_id', $courier_id)
-       ->select('tracking_number')->first();
-       $tracking_number = !empty($response)? $response->tracking_number:0;
-       return $tracking_number;
-      
+    public function fetchWaybill($company_id, $courier_id, $payment_mode = '')
+    {
+        $response = DB::table('import_tracking_numbers')
+            ->where('used', 0)
+            ->where('company_id', $company_id)
+            ->where('courier_id', $courier_id)
+            ->when($payment_mode, function ($query) use ($payment_mode) {
+                return $query->where('payment_type', $payment_mode);
+            })
+            ->select('tracking_number')
+            ->first();
+
+        return $response->tracking_number ?? 0;
     }
 
     public function markWaybillUsed($company_id,$courier_id,$tracking_number){

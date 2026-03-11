@@ -411,14 +411,14 @@ class BluedartCourierController extends Controller
                             /** -------------------------------
                              * STEP 3: Update ledger with real shipment_id
                              * -------------------------------- */
-                            SellerWalletLedger::where([
-                                'company_id'      => $this->company_id,
-                                'order_id'        => $order_id,
-                                'tracking_number' => $trackingNumber,
-                                'transaction_type'=> 'freight_charge',
-                            ])->latest()->update([
-                                'shipment_id' => $shipment->id,
-                            ]);
+                            // SellerWalletLedger::where([
+                            //     'company_id'      => $this->company_id,
+                            //     'order_id'        => $order_id,
+                            //     'tracking_number' => $trackingNumber,
+                            //     'transaction_type'=> 'freight_charge',
+                            // ])->latest()->update([
+                            //     'shipment_id' => $shipment->id,
+                            // ]);
 
                             /** -------------------------------
                              * STEP 4: Courier response
@@ -521,7 +521,6 @@ class BluedartCourierController extends Controller
                                                 'return_location_id' => $this->return_address->id,
                                                 'return_location_address' => $return_address,
                                                 'manifest_created' => 0,
-                                                'pickup_id' => $token_number ?? null,
                                                 'payment_mode' => $order_info['payment_mode'],
                                             ]);
                                             /** -------------------------------
@@ -560,7 +559,7 @@ class BluedartCourierController extends Controller
                                         });
                                     }catch(\Exception $e){
                                         Log::error("Bluedart Shipment Creation Failed for Order ID {$order_id}: ".$e->getMessage());
-                                        $this->result['error'][$order_info['vendor_order_number']] = "Shipment creation failed due to internal error.".$e->getMessage();
+                                        $error_response[] = "Shipment creation failed due to internal error.".$e->getMessage();
                                         continue;
                                     }
                                     // ShipmentInfo::create([
