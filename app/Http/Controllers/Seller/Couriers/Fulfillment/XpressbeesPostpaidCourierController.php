@@ -49,6 +49,7 @@ class XpressbeesPostpaidCourierController extends Controller
 	}
 	public function assignTrackingNumber()
     {   
+        $shipmentService = app(OrderShipmentService::class);
         $token = $this->authentication();
         if(empty($token)){
             $this->result['error'][] = "Credentials are invalid.";
@@ -352,7 +353,7 @@ class XpressbeesPostpaidCourierController extends Controller
                         /** -------------------------------
                         * STEP 4: Update Order Status
                         * -------------------------------- */
-                        DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->company_id,'courier_id'=>$this->courier_id])->update(['used' => 1]);
+                        DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->parent_company_id,'courier_id'=>$this->parent_courier_id])->update(['used' => 1]);
                         Order::where('id', $order_id)->update(['status_code' => 'P', 'rate_card_id' => $rate['rate_card_id']??null]);
                     }); 
                     $this->result['success'] = true;

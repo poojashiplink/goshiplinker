@@ -65,7 +65,7 @@ class StoresShipmentStatusUpdate extends Command
                     ->name('Update Shipment statuses Jobs')
                     ->dispatch();
             }
-        });
+        }, 'si.id');
 
         $this->info("All batches dispatched successfully.");
     }

@@ -311,7 +311,7 @@ class EkartCourierController extends Controller
                             /** -------------------------------
                             * STEP 3: Update Order Status
                             * -------------------------------- */
-                            DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->company_id,'courier_id'=>$this->courier_id])->update(['used' => 1]);
+                            DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->parent_company_id,'courier_id'=>$this->parent_courier_id])->update(['used' => 1]);
                             Order::where('id', $order_id)->update(['status_code' => 'P', 'rate_card_id' => $rate['rate_card_id']??null]);
                         });   
                         $this->result['success'] = true;
@@ -324,7 +324,7 @@ class EkartCourierController extends Controller
                 {
                     $error_message =  implode(',',$response['response'][0]['message']);
                     if(strpos($error_message, 'already present') !== false || strpos($error_message, 'already exists with the same') !== false){
-                        DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->company_id,'courier_id'=>$this->courier_id])->update(['used' => 1]);
+                        DB::table('import_tracking_numbers')->where(['tracking_number'=> $trackingNumber,'company_id'=>$this->parent_company_id,'courier_id'=>$this->parent_courier_id])->update(['used' => 1]);
                     }
                     $this->result['error'][$order_info['vendor_order_number']] = $error_message;
                 }elseif(isset($response['response'][0]['api_response_message']) && !isset($response['response'][0]['status'])){
